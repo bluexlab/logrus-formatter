@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	formatter "github.com/antonfisher/nested-logrus-formatter"
+	formatter "github.com/bluexlab/logrus-formatter"
 	"github.com/sirupsen/logrus"
 )
 

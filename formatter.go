@@ -6,17 +6,22 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 )
+
+// RFC3339Milli the predefined layouts for TimestampFormat
+const RFC3339Milli string = "2006-01-02T15:04:05.000Z07:00"
 
 // Formatter - logrus formatter, implements logrus.Formatter
 type Formatter struct {
 	// FieldsOrder - default: fields sorted alphabetically
 	FieldsOrder []string
 
-	// TimestampFormat - default: time.StampMilli = "Jan _2 15:04:05.000"
+	// UseLocalTime - use local time
+	UseLocalTime bool
+
+	// TimestampFormat - default: RFC3339Milli "2006-01-02T15:04:05.000Z07:00"
 	TimestampFormat string
 
 	// HideKeys - show [fieldValue] instead of [fieldKey:fieldValue]
@@ -51,9 +56,13 @@ type Formatter struct {
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	levelColor := getColorByLevel(entry.Level)
 
+	if !f.UseLocalTime {
+		entry.Time = entry.Time.UTC()
+	}
+
 	timestampFormat := f.TimestampFormat
 	if timestampFormat == "" {
-		timestampFormat = time.StampMilli
+		timestampFormat = RFC3339Milli
 	}
 
 	// output buffer
@@ -75,7 +84,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	if !f.NoColors {
-		fmt.Fprintf(b, "\x1b[%dm", levelColor)
+		_, _ = fmt.Fprintf(b, "\x1b[%dm", levelColor)
 	}
 
 	b.WriteString(" [")
@@ -128,9 +137,9 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) {
 	if entry.HasCaller() {
 		if f.CustomCallerFormatter != nil {
-			fmt.Fprintf(b, f.CustomCallerFormatter(entry.Caller))
+			_, _ = fmt.Fprint(b, f.CustomCallerFormatter(entry.Caller))
 		} else {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				b,
 				" (%s:%d %s)",
 				entry.Caller.File,
@@ -170,7 +179,7 @@ func (f *Formatter) writeOrderedFields(b *bytes.Buffer, entry *logrus.Entry) {
 	if length > 0 {
 		notFoundFields := make([]string, 0, length)
 		for field := range entry.Data {
-			if foundFieldsMap[field] == false {
+			if !foundFieldsMap[field] {
 				notFoundFields = append(notFoundFields, field)
 			}
 		}
@@ -185,9 +194,9 @@ func (f *Formatter) writeOrderedFields(b *bytes.Buffer, entry *logrus.Entry) {
 
 func (f *Formatter) writeField(b *bytes.Buffer, entry *logrus.Entry, field string) {
 	if f.HideKeys {
-		fmt.Fprintf(b, "[%v]", entry.Data[field])
+		_, _ = fmt.Fprintf(b, "[%v]", entry.Data[field])
 	} else {
-		fmt.Fprintf(b, "[%s:%v]", field, entry.Data[field])
+		_, _ = fmt.Fprintf(b, "[%s:%v]", field, entry.Data[field])
 	}
 
 	if !f.NoFieldsSpace {

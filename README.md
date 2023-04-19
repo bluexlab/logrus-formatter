@@ -15,7 +15,10 @@ type Formatter struct {
 	// FieldsOrder - default: fields sorted alphabetically
 	FieldsOrder []string
 
-	// TimestampFormat - default: time.StampMilli = "Jan _2 15:04:05.000"
+	// UseLocalTime - use local time
+	UseLocalTime bool
+
+	// TimestampFormat - default: RFC3339Milli "2006-01-02T15:04:05.000Z07:00"
 	TimestampFormat string
 
 	// HideKeys - show [fieldValue] instead of [fieldKey:fieldValue]
@@ -51,21 +54,17 @@ type Formatter struct {
 
 ```go
 import (
-	nested "github.com/antonfisher/nested-logrus-formatter"
+	formatter "github.com/bluexlab/logrus-formatter"
 	"github.com/sirupsen/logrus"
 )
 
-log := logrus.New()
-log.SetFormatter(&nested.Formatter{
-	HideKeys:    true,
-	FieldsOrder: []string{"component", "category"},
-})
+formatter.InitLogger()
 
-log.Info("just info message")
-// Output: Jan _2 15:04:05.000 [INFO] just info message
+logrus.Info("just info message")
+// Output: 2006-01-02T15:04:05.999Z [INFO] just info message
 
 log.WithField("component", "rest").Warn("warn message")
-// Output: Jan _2 15:04:05.000 [WARN] [rest] warn message
+// Output: 2006-01-02T15:04:05.999Z [WARNING] [rest] warn message
 ```
 
 See more examples in the [tests](./tests/formatter_test.go) file.
